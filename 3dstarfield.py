@@ -40,6 +40,11 @@ class Simulation:
             # A star is represented as a list with this format: [X,Y,Z]
             star = [randrange(-25,25), randrange(-25,25), randrange(1, self.max_depth)]
             self.stars.append(star)
+        #
+        # The planet uses the same variables as the stars for position, and then adds a start size, a start shade, and a random number generated to 
+        # determine whether we are displaying the planet (0 is for display)
+        #
+        self.planet=[600,400,self.max_depth,2,50,0]
 
     def move_and_draw_stars(self):
         """ Move and draw the stars """
@@ -72,6 +77,39 @@ class Simulation:
                 shade = (1 - float(star[2]) / self.max_depth) * 255
                 self.screen.fill((shade,shade,shade),(x,y,size,size))
 
+    def show_planet (self):
+            # Z is size
+            self.planet[2] -=0.19
+            origin_x = self.screen.get_width() / 2
+            origin_y = self.screen.get_height() / 2
+
+            # If the Planet has past the screen (I mean Z<=0) then we
+            # reposition it far away from the screen (Z=max_depth)
+            # with random X and Y coordinates.  Size and shade ae also set back to default
+            # start values.   The planet[5] key is to generate a planet 20 percent of the time
+            if self.planet[2] <= 0: # 
+                self.planet[0] = randrange(-25,25) 
+                self.planet[1] = randrange(-25,25) 
+                self.planet[2] = randrange(5,20)
+                self.planet[3] = 2
+                self.planet[4] = 50
+                self.planet[5] = randrange(0,4)
+            # Convert the 3D coordinates to 2D using perspective projection.
+            # same math as for Stars
+            k = 128.0 / self.planet[2]
+            x = int(self.planet[0] * k + origin_x)
+            y = int(self.planet[1] * k + origin_y) 
+          
+            # Draw the Planeet (if it is visible in the screen).
+            if 0 <= x < self.screen.get_width() and 0 <= y < self.screen.get_height():
+                #shade = 55
+                print ("x ", x, " y ",y," rad ",self.planet[3]," shade ",self.planet[4], " draw ", self.planet[5])
+                if self.planet[5] == 0:
+                    pygame.draw.circle(self.screen,(self.planet[4],self.planet[4],self.planet[4]),(x,y),self.planet[3],0)
+                self.planet[3] += 1
+                if self.planet[4] <=250:
+                    self.planet[4] += 4                
+                
     def show_target_grid(self):
         """" Add targetting grid to starfield display """
         origin_x = self.screen.get_width() / 2
@@ -99,42 +137,6 @@ class Simulation:
         else:
              self.Button3.create_button(self.screen, (107,142,35), 10, 150, 100,    50,    0,        "Fire Laser", (255,255,255))   
           
-    def show_planet (self):
-            # The Z component is decreased on each frame.
-            self.planet[2] -= 0.19
-            origin_x = self.screen.get_width() / 2
-            origin_y = self.screen.get_height() / 2
-
-            # If the star has past the screen (I mean Z<=0) then we
-            # reposition it far away from the screen (Z=max_depth)
-            # with random X and Y coordinates.
-            if self.planet[2] <= 0:
-                self.planet[0] = randrange(-25,25)
-                self.planet[1] = randrange(-25,25)
-                self.planet[2] = self.max_depth
- 
-            if self.planet[0] <= 0:
-                self.planet[0] -= 10
-            else:
-                self.planet[0] += 10
-            x = self.planet[0]
-            if self.planet[1] <= 0:
-                self.planet[1] -= 10
-            else:
-                self.planet[1] += 10
-            y = self.planet[1]
-          
-            # Draw the star (if it is visible in the screen).
-            # We calculate the size such that distant stars are smaller than
-            # closer stars. Similarly, we make sure that distant stars are
-            # darker than closer stars. This is done using Linear Interpolation.
-            if 0 <= x < self.screen.get_width() and 0 <= y < self.screen.get_height():
-                size = 300
-                shade = 200
-#                print ("x ", x, " y ",y," rad ",size)
-                pygame.draw.circle(self.screen,(shade,shade,shade),(x,y),size,0)
-
-
 
     def run(self):
         self.Button1 = Buttons.Button()
@@ -167,22 +169,25 @@ class Simulation:
                         print ("Fire!")
 
             
-            self.screen.fill((0,0,0))
+           self.screen.fill((0,0,0))
+            self.move_and_draw_stars()
+            self.show_planet()
+            #
+            # Update the color and text on the buttons depending on the state of button press
             if self.mode == 1:
-                self.move_and_draw_stars()
+                #self.move_and_draw_stars()
                 self.Button2.create_button(self.screen, (107,142,35), 10, 80, 100,    50,    0,        "Target OFF", (255,255,255))
                 self.Button3.create_button(self.screen, (107,142,35), 10, 150, 100,    50,    0,        "Fire Laser", (255,255,255))
             if self.mode == 2:
-                self.move_and_draw_stars()
+                #self.move_and_draw_stars()
                 self.show_target_grid()
                 self.Button2.create_button(self.screen, (255,0,0), 10, 80, 100,    50,    0,        "Target ON", (255,255,255))
                 self.Button3.create_button(self.screen, (107,142,35), 10, 150, 100,    50,    0,        "Fire Laser", (255,255,255))
             if self.mode == 3:
-                self.move_and_draw_stars()
+                #self.move_and_draw_stars()
                 self.show_target_grid()
                 self.Button2.create_button(self.screen, (255,0,0), 10, 80, 100,    50,    0,        "Target ON", (255,255,255))
                 self.fire_lasers()
-            self.show_planet()
             #Parameters:               surface,      color,       x,   y,   length, height, width,    text,     text_color    
             self.Button1.create_button(self.screen, (107,142,35), 10, 10, 100,    50,    0,        "Starview", (255,255,255))
 #            self.Button2.create_button(self.screen, (107,142,35), 10, 80, 100,    50,    0,        "Target OFF", (255,255,255))
